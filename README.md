@@ -1,13 +1,8 @@
-# 🛡️ pfSense NIPS & Multi-VM Network Security Architecture
-
-[![pfSense](https://img.shields.io/badge/pfSense-2.7.2--RELEASE-212529?style=for-the-badge&logo=pfsense&logoColor=red)](https://www.pfsense.org/)
-[![Suricata](https://img.shields.io/badge/Suricata-NIPS_Inline-EF3B2C?style=for-the-badge&logo=suricata&logoColor=white)](https://suricata.io/)
-[![FreeBSD](https://img.shields.io/badge/OS-FreeBSD%20netmap-AB2B28?style=for-the-badge&logo=freebsd&logoColor=white)](https://www.freebsd.org/)
-[![VirtualBox](https://img.shields.io/badge/Lab-VirtualBox_Host--Only-183A61?style=for-the-badge&logo=virtualbox&logoColor=white)](https://www.virtualbox.org/)
+# pfSense NIPS & Multi-VM Network Security Architecture
 
 ---
 
-## 📌 Executive Summary
+## Executive Summary
 
 This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway and Network Intrusion Prevention System (NIPS) for a segmented multi-VM laboratory environment.
 
@@ -15,7 +10,7 @@ By integrating **Suricata** in **Inline IPS mode via BSD `netmap`**, malicious n
 
 ---
 
-## 🌐 Network Topology & Traffic Flow
+## Network Topology & Traffic Flow
 
 All inbound, outbound, and inter-subnet traffic from 3 client virtual machines is forcibly routed through the pfSense LAN interface (`192.168.56.254`):
 
@@ -47,7 +42,7 @@ All inbound, outbound, and inter-subnet traffic from 3 client virtual machines i
 
 ---
 
-## ⚙️ Suricata Package Setup & Inline NIPS Engine
+## Suricata Package Setup & Inline NIPS Engine
 
 Suricata is configured on pfSense interface `em1` (`vboxnet0`) using netmap ring buffers for zero-copy packet drop performance.
 
@@ -72,7 +67,7 @@ outputs:
 
 ---
 
-## ✍️ Custom NIPS Rule Definitions (`rules/custom_suricata.rules`)
+## Custom NIPS Rule Definitions (`rules/custom_suricata.rules`)
 
 Custom signatures were authored and activated to enforce active packet drops (`drop` action):
 
@@ -89,7 +84,7 @@ drop tcp $HOME_NET any -> $EXTERNAL_NET 4444 (msg:"PFSENSE-IPS Outbound Unencryp
 
 ---
 
-## 📊 Defense Verification & Real-Time Block Logs
+## Defense Verification & Real-Time Block Logs
 
 When launching HTTP command injection attempts (`curl http://192.168.56.106/cmd.php?cmd=id`) from `192.168.56.105`, Suricata immediately dropped the packets and populated the kernel table.
 
@@ -110,7 +105,7 @@ Sep 17 14:22:05 pfsense filterlog[82104]: 100,,,1000000103,em1,match,block,in,4,
 
 ---
 
-## 🛠️ Practical Engineering Notes & Troubleshooting
+## Practical Engineering Notes & Troubleshooting
 
 1. **VirtualBox Hardware NIC Driver (`82540EM`)**:
    In VirtualBox VM settings, the network adapter type MUST be configured to **`Intel PRO/1000 MT Desktop (82540EM)`**. Selecting `virtio-net` (paravirtualized) causes netmap kernel panics during interface ring buffer initialization under FreeBSD 14/pfSense 2.7.x.
@@ -120,7 +115,7 @@ Sep 17 14:22:05 pfsense filterlog[82104]: 100,,,1000000103,em1,match,block,in,4,
 
 ---
 
-## 📂 Repository Layout
+## Repository Layout
 
 ```
 .
