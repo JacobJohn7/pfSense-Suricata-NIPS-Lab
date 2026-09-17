@@ -4,9 +4,9 @@
 
 ## Executive Summary
 
-This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway and Network Intrusion Prevention System (NIPS) for a segmented virtual laboratory environment (Ubuntu Server target and Ubuntu Desktop client).
+This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway, Network Intrusion Prevention System (NIPS), and DNS sinkhole for a segmented virtual laboratory environment (Ubuntu Server target and Ubuntu Desktop client).
 
-By integrating **Suricata** in **Inline IPS mode via BSD `netmap`**, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, and unauthorized reverse shells—is actively dropped at the network interface layer before reaching target hosts. Offending IP addresses are dynamically injected into the pf kernel state table (`snort2c`) with active TCP session termination (`kill-state`).
+By integrating **Suricata** in **Inline IPS mode via BSD `netmap`** alongside **pfBlockerNG-devel**, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, and outbound reverse shells—is actively dropped at the network interface layer. Simultaneously, **pfBlockerNG** handles IP feed blocking (`pfB_PRI1_v4`) and DNSBL domain sinkholing via Unbound DNS resolver integration.
 
 ---
 
@@ -19,6 +19,7 @@ All inbound, outbound, and inter-subnet traffic from client virtual machines is 
                         |  pfSense 2.7.2 Firewall & NIPS        |
                         |  WAN: NAT Interface (DHCP)            |
                         |  LAN: 192.168.56.254 (Host-Only em1)  |
+                        |  Packages: Suricata NIPS + pfBlockerNG |
                         +---------------------------------------+
                                             |
                     +-----------------------+-----------------------+
@@ -33,11 +34,11 @@ All inbound, outbound, and inter-subnet traffic from client virtual machines is 
 
 ---
 
-## Suricata Package Setup & Inline NIPS Engine
+## Firewall Packages & Security Engine Setup
 
-Suricata is configured on pfSense interface `em1` (`vboxnet0`) using netmap ring buffers for zero-copy packet drop performance.
+### 1. Suricata Inline NIPS Engine (`config/suricata_pfsense_override.yaml`)
 
-### Interface Override Config (`config/suricata_pfsense_override.yaml`)
+Configured on pfSense interface `em1` (`vboxnet0`) using BSD `netmap` ring buffers to inspect traffic and dynamically inject dropped IPs into the pf kernel table (`snort2c`):
 
 ```yaml
 pf:
@@ -56,11 +57,17 @@ outputs:
             alerts: yes
 ```
 
+### 2. pfBlockerNG IP & DNSBL Filtering
+
+Configured **pfBlockerNG-devel** with Unbound DNS Resolver integration:
+- **IP Blocklists (`IPv4 Feeds`)**: Subscribed to Spamhaus DROP, AbuseIPDB, and PRI1 threat feeds, automatically creating `pfB_PRI1_v4` kernel firewall alias rules.
+- **DNSBL Domain Sinkholing**: Intercepts queries to known malicious C2 and phishing domains, returning sinkhole IP (`10.0.0.1`) before requests exit the LAN interface.
+
 ---
 
 ## Custom NIPS Rule Definitions (`rules/custom_suricata.rules`)
 
-Custom signatures were authored and activated to enforce active packet drops (`drop` action):
+Custom signatures authored and activated to enforce active packet drops (`drop` action):
 
 ```suricata
 # 1. Drop Web Shell & Command Execution Attempt
@@ -77,16 +84,14 @@ drop tcp $HOME_NET any -> $EXTERNAL_NET 4444 (msg:"PFSENSE-IPS Outbound Unencryp
 
 ## Defense Verification & Real-Time Block Logs
 
-When launching HTTP command injection attempts (`curl http://192.168.56.106/cmd.php?cmd=id`) from `192.168.56.105`, Suricata immediately dropped the packets and populated the kernel table.
-
-### 1. pf Kernel Block Table (`pfctl -t snort2c -T show`)
-```text
-192.168.56.105
-```
-
-### 2. Suricata Fast Alert Log (`logs/suricata_alerts.log`)
+### 1. Suricata Fast Alert Drop Log (`logs/suricata_alerts.log`)
 ```text
 09/17/2026-14:22:05.109283  [Drop] [**] [1:2000001:1] PFSENSE-IPS HTTP Command Execution Attempt [**] {TCP} 192.168.56.105:51240 -> 192.168.56.106:80
+```
+
+### 2. pfBlockerNG DNSBL Sinkhole Log (`logs/pfblockerng_dnsbl.log`)
+```text
+DNSBL-Block,Sep 17 14:30:12,malicious-c2-domain.test,192.168.56.105,DNSBL_Malware,Block,Unbound-Sinkhole,10.0.0.1
 ```
 
 ### 3. pfSense Kernel Filter Log (`logs/pfsense_filterlog.log`)
@@ -116,6 +121,7 @@ Sep 17 14:22:05 pfsense filterlog[82104]: 100,,,1000000103,em1,match,block,in,4,
 │   └── custom_suricata.rules            # Custom NIPS drop rules (SID 2000001-2000003)
 ├── logs/
 │   ├── suricata_alerts.log              # Suricata text drop log
+│   ├── pfblockerng_dnsbl.log            # pfBlockerNG DNSBL sinkhole log
 │   ├── eve_drops.json                   # Structured EVE drop JSON
 │   └── pfsense_filterlog.log            # pfSense packet filter log
 └── scripts/

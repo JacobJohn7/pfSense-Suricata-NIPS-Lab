@@ -1,0 +1,2 @@
+DNSBL-Block,Sep 17 14:30:12,malicious-c2-domain.test,192.168.56.105,DNSBL_Malware,Block,Unbound-Sinkhole,10.0.0.1
+DNSBL-Block,Sep 17 14:32:45,phishing-test-feed.org,192.168.56.105,DNSBL_Phish,Block,Unbound-Sinkhole,10.0.0.1
