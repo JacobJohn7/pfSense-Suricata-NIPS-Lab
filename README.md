@@ -10,9 +10,9 @@ By integrating **Suricata** in **Inline IPS mode via BSD `netmap`** alongside **
 
 ---
 
-## Network Topology & Traffic Flow
+## Hard Network Isolation & Routing Architecture
 
-All inbound, outbound, and inter-subnet traffic from client virtual machines is routed through the pfSense LAN interface (`192.168.56.254`):
+To guarantee 100% gateway inspection, direct NAT access (NIC 1) was **disabled** on both target and client virtual machines. All traffic is physically constrained to Host-Only adapter `vboxnet0` with default gateway set to `192.168.56.254` (pfSense LAN `em1`):
 
 ```
                         +---------------------------------------+
@@ -27,8 +27,9 @@ All inbound, outbound, and inter-subnet traffic from client virtual machines is 
                     |                                               |
      +--------------+--------------+                +---------------+--------------+
      | Target Node                 |                | Client Node                  |
-     | Ubuntu Server               |                | Ubuntu Desktop               |
+     | Ubuntu Server (NAT Disabled)|                | Ubuntu Desktop (NAT Disabled)|
      | IP: 192.168.56.106          |                | IP: 192.168.56.105           |
+     | MAC: 08:00:27:B4:AC:8A      |                | MAC: 08:00:27:94:82:86       |
      +-----------------------------+                +------------------------------+
 ```
 
