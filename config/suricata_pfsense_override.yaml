@@ -1,0 +1,42 @@
+# pfSense Suricata Package Interface Configuration (LAN - enp0s8 / em1)
+# Configured via pfSense WebGUI (Services -> Suricata -> Interface Settings)
+
+default-rule-path: /usr/local/etc/suricata/suricata_10488_em1/rules
+rule-files:
+  - suricata.rules
+  - custom_suricata.rules
+
+vars:
+  address-groups:
+    HOME_NET: "[192.168.56.0/24]"
+    EXTERNAL_NET: "!$HOME_NET"
+
+# Block Settings (Inline IPS Mode via netmap / pf snort2c table)
+pf:
+  block-to-opts: yes
+  block-table: snort2c
+  kill-state: yes
+
+alert-systemlog:
+  enabled: yes
+  facility: local1
+  priority: Notice
+
+outputs:
+  - fast:
+      enabled: yes
+      filename: alerts.log
+      append: yes
+
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            payload: yes
+            packet: yes
+        - http:
+            extended: yes
+        - drop:
+            alerts: yes
