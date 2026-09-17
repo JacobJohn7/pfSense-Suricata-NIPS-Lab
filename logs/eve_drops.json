@@ -1,0 +1,54 @@
+[
+  {
+    "timestamp": "2026-09-17T14:22:05.109283+0000",
+    "in_iface": "em1",
+    "event_type": "drop",
+    "src_ip": "192.168.56.105",
+    "src_port": 51240,
+    "dest_ip": "192.168.56.106",
+    "dest_port": 80,
+    "proto": "TCP",
+    "drop": {
+      "len": 60,
+      "tos": 0,
+      "ttl": 64,
+      "ipid": 12934,
+      "tcpflags": "SYN"
+    },
+    "alert": {
+      "action": "blocked",
+      "gid": 1,
+      "signature_id": 2000001,
+      "rev": 1,
+      "signature": "PFSENSE-IPS HTTP Command Execution Attempt",
+      "category": "Web Application Attack",
+      "severity": 1
+    }
+  },
+  {
+    "timestamp": "2026-09-17T14:25:12.890124+0000",
+    "in_iface": "em1",
+    "event_type": "drop",
+    "src_ip": "192.168.56.105",
+    "src_port": 51288,
+    "dest_ip": "192.168.56.106",
+    "dest_port": 80,
+    "proto": "TCP",
+    "drop": {
+      "len": 60,
+      "tos": 0,
+      "ttl": 64,
+      "ipid": 12990,
+      "tcpflags": "SYN"
+    },
+    "alert": {
+      "action": "blocked",
+      "gid": 1,
+      "signature_id": 2000002,
+      "rev": 1,
+      "signature": "PFSENSE-IPS Nmap Scripting Engine Probe Blocked",
+      "category": "Attempted Information Leak",
+      "severity": 2
+    }
+  }
+]
