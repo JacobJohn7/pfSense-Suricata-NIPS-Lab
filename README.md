@@ -4,7 +4,7 @@
 
 ## Executive Summary
 
-This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway and Network Intrusion Prevention System (NIPS) for a segmented multi-VM laboratory environment.
+This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway and Network Intrusion Prevention System (NIPS) for a segmented virtual laboratory environment (Ubuntu Server target and Ubuntu Desktop client).
 
 By integrating **Suricata** in **Inline IPS mode via BSD `netmap`**, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, and unauthorized reverse shells—is actively dropped at the network interface layer before reaching target hosts. Offending IP addresses are dynamically injected into the pf kernel state table (`snort2c`) with active TCP session termination (`kill-state`).
 
@@ -12,32 +12,23 @@ By integrating **Suricata** in **Inline IPS mode via BSD `netmap`**, malicious n
 
 ## Network Topology & Traffic Flow
 
-All inbound, outbound, and inter-subnet traffic from 3 client virtual machines is forcibly routed through the pfSense LAN interface (`192.168.56.254`):
+All inbound, outbound, and inter-subnet traffic from client virtual machines is routed through the pfSense LAN interface (`192.168.56.254`):
 
 ```
-                                  +---------------------------------------+
-                                  |  pfSense 2.7.2 Firewall & NIPS        |
-                                  |  WAN: NAT Interface (DHCP)            |
-                                  |  LAN: 192.168.56.254 (Host-Only em1)  |
-                                  +---------------------------------------+
-                                                      |
-                    +---------------------------------+---------------------------------+
-                    |                                                                   |
-                    v                                                                   v
-     +-----------------------------+                                     +-----------------------------+
-     |   Target Network Segment    |                                     |   Attacker Network Segment  |
-     |                             |                                     |                             |
-     |  Ubuntu Server (Target Host)|                                     |  Kali / Ubuntu Desktop Node |
-     |  IP: 192.168.56.106         |                                     |  IP: 192.168.56.105         |
-     +-----------------------------+                                     +-----------------------------+
-                    |                                                                   |
-                    +---------------------------------+---------------------------------+
-                                                      |
-                                                      v
-                                        +---------------------------+
-                                        |   Windows 10 Workstation  |
-                                        |   IP: 192.168.56.108      |
-                                        +---------------------------+
+                        +---------------------------------------+
+                        |  pfSense 2.7.2 Firewall & NIPS        |
+                        |  WAN: NAT Interface (DHCP)            |
+                        |  LAN: 192.168.56.254 (Host-Only em1)  |
+                        +---------------------------------------+
+                                            |
+                    +-----------------------+-----------------------+
+                    | (vboxnet0 - 192.168.56.0/24 Default Gateway: .254) |
+                    |                                               |
+     +--------------+--------------+                +---------------+--------------+
+     | Target Node                 |                | Client Node                  |
+     | Ubuntu Server               |                | Ubuntu Desktop               |
+     | IP: 192.168.56.106          |                | IP: 192.168.56.105           |
+     +-----------------------------+                +------------------------------+
 ```
 
 ---
