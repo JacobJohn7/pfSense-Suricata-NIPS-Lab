@@ -1,5 +1,10 @@
 # pfSense NIPS & Multi-VM Network Security Architecture
 
+![pfSense 2.7.2](https://img.shields.io/badge/pfSense-2.7.2-212529?style=for-the-badge&logo=pfsense&logoColor=white)
+![Suricata NIPS](https://img.shields.io/badge/Suricata-Inline_NIPS-red?style=for-the-badge&logo=suricata&logoColor=white)
+![BSD netmap](https://img.shields.io/badge/Kernel-BSD_netmap-purple?style=for-the-badge)
+![DNSBL](https://img.shields.io/badge/pfBlockerNG-DNSBL_Sinkhole-brightgreen?style=for-the-badge)
+
 ---
 
 ## Executive Summary
