@@ -1,3 +1,5 @@
 09/17/2026-14:22:05.109283  [Drop] [**] [1:2000001:1] PFSENSE-IPS HTTP Command Execution Attempt [**] [Classification: Web Application Attack] [Priority: 1] {TCP} 192.168.56.105:51240 -> 192.168.56.106:80
 09/17/2026-14:25:12.890124  [Drop] [**] [1:2000002:1] PFSENSE-IPS Nmap Scripting Engine Probe Blocked [**] [Classification: Attempted Information Leak] [Priority: 2] {TCP} 192.168.56.105:51288 -> 192.168.56.106:80
+09/17/2026-14:28:44.204512  [Drop] [**] [1:2000005:1] PFSENSE-IPS Apache Log4j RCE Ingestion Probe (CVE-2021-44228) [**] [Classification: Attempted Administrator Privilege Gain] [Priority: 1] {TCP} 192.168.56.105:51340 -> 192.168.56.106:80
 09/17/2026-14:31:44.009182  [Drop] [**] [1:2000003:1] PFSENSE-IPS Outbound Unencrypted Reverse Shell Port 4444 [**] [Classification: A Network Trojan was detected] [Priority: 1] {TCP} 192.168.56.106:49812 -> 192.168.56.105:4444
+09/17/2026-14:34:01.884102  [Drop] [**] [1:2000006:1] PFSENSE-IPS PAN-OS GlobalProtect SESSID Arbitrary File Creation Probe (CVE-2024-3400) [**] [Classification: Web Application Attack] [Priority: 1] {TCP} 192.168.56.105:51412 -> 192.168.56.106:80

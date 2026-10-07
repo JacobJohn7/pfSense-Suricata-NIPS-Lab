@@ -13,3 +13,9 @@ drop tcp $HOME_NET any -> $EXTERNAL_NET 4444 (msg:"PFSENSE-IPS Outbound Unencryp
 
 # 4. SSH Brute Force Rate Limiting Threshold
 drop tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"PFSENSE-IPS SSH Brute Force Rate Exceeded"; flow:established,to_server; flags:S; threshold: type threshold, track by_src, count 8, seconds 30; classtype:attempted-admin; sid:2000004; rev:1;)
+
+# 5. Block CVE-2021-44228 Log4j JNDI Remote Code Execution in HTTP Headers
+drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS Apache Log4j RCE Ingestion Probe (CVE-2021-44228)"; flow:established,to_server; content:"${jndi:"; nocase; fast_pattern; classtype:attempted-admin; reference:cve,2021-44228; sid:2000005; rev:1;)
+
+# 6. Block CVE-2024-3400 Palo Alto PAN-OS GlobalProtect Command Injection Probe
+drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS PAN-OS GlobalProtect SESSID Arbitrary File Creation Probe (CVE-2024-3400)"; flow:established,to_server; content:"/ssl-vpn/hipreport.esp"; http_uri; content:"Cookie|3a|"; nocase; content:"SESSID=../../"; classtype:web-application-attack; reference:cve,2024-3400; sid:2000006; rev:1;)

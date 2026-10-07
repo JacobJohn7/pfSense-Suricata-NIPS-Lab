@@ -11,7 +11,7 @@
 
 This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway, Network Intrusion Prevention System (NIPS), and DNS sinkhole for a segmented virtual laboratory environment (Ubuntu Server target and Ubuntu Desktop client).
 
-By integrating **Suricata** in **Inline IPS mode via BSD `netmap`** alongside **pfBlockerNG-devel**, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, and outbound reverse shells—is actively dropped at the network interface layer. Simultaneously, **pfBlockerNG** handles IP feed blocking (`pfB_PRI1_v4`) and DNSBL domain sinkholing via Unbound DNS resolver integration.
+By integrating **Suricata** in **Inline IPS mode via BSD `netmap`** alongside **pfBlockerNG-devel**, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, Log4Shell probes, PAN-OS exploitation attempts, and outbound reverse shells—is actively dropped at the network interface layer. Simultaneously, **pfBlockerNG** handles IP feed blocking (`pfB_PRI1_v4`) and DNSBL domain sinkholing via Unbound DNS resolver integration.
 
 ---
 
@@ -84,6 +84,15 @@ drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS Nmap Scri
 
 # 3. Drop Unauthorized Outbound Reverse Shells
 drop tcp $HOME_NET any -> $EXTERNAL_NET 4444 (msg:"PFSENSE-IPS Outbound Unencrypted Reverse Shell Port 4444"; flow:to_server; classtype:trojan-activity; sid:2000003; rev:1;)
+
+# 4. SSH Brute Force Rate Limiting Threshold
+drop tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"PFSENSE-IPS SSH Brute Force Rate Exceeded"; flow:established,to_server; flags:S; threshold: type threshold, track by_src, count 8, seconds 30; classtype:attempted-admin; sid:2000004; rev:1;)
+
+# 5. Drop Apache Log4j RCE JNDI Ingestion Probe (CVE-2021-44228)
+drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS Apache Log4j RCE Ingestion Probe (CVE-2021-44228)"; flow:established,to_server; content:"${jndi:"; nocase; fast_pattern; classtype:attempted-admin; reference:cve,2021-44228; sid:2000005; rev:1;)
+
+# 6. Drop PAN-OS GlobalProtect Command Injection Probe (CVE-2024-3400)
+drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS PAN-OS GlobalProtect SESSID Arbitrary File Creation Probe (CVE-2024-3400)"; flow:established,to_server; content:"/ssl-vpn/hipreport.esp"; http_uri; content:"Cookie|3a|"; nocase; content:"SESSID=../../"; classtype:web-application-attack; reference:cve,2024-3400; sid:2000006; rev:1;)
 ```
 
 ---
@@ -92,7 +101,11 @@ drop tcp $HOME_NET any -> $EXTERNAL_NET 4444 (msg:"PFSENSE-IPS Outbound Unencryp
 
 ### 1. Suricata Fast Alert Drop Log (`logs/suricata_alerts.log`)
 ```text
-09/17/2026-14:22:05.109283  [Drop] [**] [1:2000001:1] PFSENSE-IPS HTTP Command Execution Attempt [**] {TCP} 192.168.56.105:51240 -> 192.168.56.106:80
+09/17/2026-14:22:05.109283  [Drop] [**] [1:2000001:1] PFSENSE-IPS HTTP Command Execution Attempt [**] [Classification: Web Application Attack] [Priority: 1] {TCP} 192.168.56.105:51240 -> 192.168.56.106:80
+09/17/2026-14:25:12.890124  [Drop] [**] [1:2000002:1] PFSENSE-IPS Nmap Scripting Engine Probe Blocked [**] [Classification: Attempted Information Leak] [Priority: 2] {TCP} 192.168.56.105:51288 -> 192.168.56.106:80
+09/17/2026-14:28:44.204512  [Drop] [**] [1:2000005:1] PFSENSE-IPS Apache Log4j RCE Ingestion Probe (CVE-2021-44228) [**] [Classification: Attempted Administrator Privilege Gain] [Priority: 1] {TCP} 192.168.56.105:51340 -> 192.168.56.106:80
+09/17/2026-14:31:44.009182  [Drop] [**] [1:2000003:1] PFSENSE-IPS Outbound Unencrypted Reverse Shell Port 4444 [**] [Classification: A Network Trojan was detected] [Priority: 1] {TCP} 192.168.56.106:49812 -> 192.168.56.105:4444
+09/17/2026-14:34:01.884102  [Drop] [**] [1:2000006:1] PFSENSE-IPS PAN-OS GlobalProtect SESSID Arbitrary File Creation Probe (CVE-2024-3400) [**] [Classification: Web Application Attack] [Priority: 1] {TCP} 192.168.56.105:51412 -> 192.168.56.106:80
 ```
 
 ### 2. pfBlockerNG DNSBL Sinkhole Log (`logs/pfblockerng_dnsbl.log`)
@@ -124,12 +137,12 @@ Sep 17 14:22:05 pfsense filterlog[82104]: 100,,,1000000103,em1,match,block,in,4,
 ├── config/
 │   └── suricata_pfsense_override.yaml   # Interface & netmap pf table config
 ├── rules/
-│   └── custom_suricata.rules            # Custom NIPS drop rules (SID 2000001-2000003)
+│   └── custom_suricata.rules            # Custom NIPS drop rules (SID 2000001-2000006)
 ├── logs/
 │   ├── suricata_alerts.log              # Suricata text drop log
 │   ├── pfblockerng_dnsbl.log            # pfBlockerNG DNSBL sinkhole log
-│   ├── eve_drops.json                   # Structured EVE drop JSON
+│   ├── eve_drops.jsonl                  # Structured EVE drop NDJSON
 │   └── pfsense_filterlog.log            # pfSense packet filter log
 └── scripts/
-    └── verify_blocks.sh                 # pfctl block inspection script
+    └── verify_blocks.sh                 # pfctl block & service inspection script
 ```
