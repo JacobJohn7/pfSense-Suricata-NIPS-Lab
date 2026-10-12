@@ -5,6 +5,7 @@ default-rule-path: /usr/local/etc/suricata/suricata_10488_em1/rules
 rule-files:
   - suricata.rules
   - custom_suricata.rules
+  - web_attacks.rules
 
 vars:
   address-groups:
