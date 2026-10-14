@@ -1,25 +1,16 @@
 # pfSense NIPS & Multi-VM Network Security Architecture
 
-![pfSense 2.7.2](https://img.shields.io/badge/pfSense-2.7.2-212529?style=for-the-badge&logo=pfsense&logoColor=white)
-![Suricata NIPS](https://img.shields.io/badge/Suricata-Inline_NIPS-red?style=for-the-badge&logo=suricata&logoColor=white)
-![BSD netmap](https://img.shields.io/badge/Kernel-BSD_netmap-purple?style=for-the-badge)
-![DNSBL](https://img.shields.io/badge/pfBlockerNG-DNSBL_Sinkhole-brightgreen?style=for-the-badge)
+Deployment of a pfSense 2.7.2 virtual firewall operating as a centralized gateway, Network Intrusion Prevention System (NIPS), and DNS sinkhole for a segmented virtual laboratory environment (Ubuntu Server target and Ubuntu Desktop client).
 
----
-
-## Executive Summary
-
-This repository documents the deployment of a **pfSense 2.7.2 enterprise virtual firewall** operating as a centralized gateway, Network Intrusion Prevention System (NIPS), and DNS sinkhole for a segmented virtual laboratory environment (Ubuntu Server target and Ubuntu Desktop client).
-
-By integrating **Suricata** in **Inline IPS mode via BSD `netmap`** alongside **pfBlockerNG-devel**, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, Log4Shell probes, PAN-OS exploitation attempts, and outbound reverse shells—is actively dropped at the network interface layer. Simultaneously, **pfBlockerNG** handles IP feed blocking (`pfB_PRI1_v4`) and DNSBL domain sinkholing via Unbound DNS resolver integration.
+By integrating Suricata in Inline IPS mode via BSD `netmap` alongside pfBlockerNG-devel, malicious network traffic—including web shell command injection attempts, automated vulnerability scanners, Log4Shell probes, PAN-OS exploitation attempts, and outbound reverse shells—is actively dropped at the network interface layer. Simultaneously, pfBlockerNG handles IP feed blocking (`pfB_PRI1_v4`) and DNSBL domain sinkholing via Unbound DNS resolver integration.
 
 ---
 
 ## Hard Network Isolation & Routing Architecture
 
-To guarantee 100% gateway inspection, direct NAT access (NIC 1) was **disabled** on both target and client virtual machines. All traffic is physically constrained to Host-Only adapter `vboxnet0` with default gateway set to `192.168.56.254` (pfSense LAN `em1`):
+To guarantee 100% gateway inspection, direct NAT access (NIC 1) was disabled on both target and client virtual machines. All traffic is physically constrained to Host-Only adapter `vboxnet0` with default gateway set to `192.168.56.254` (pfSense LAN `em1`):
 
-```
+```text
                         +---------------------------------------+
                         |  pfSense 2.7.2 Firewall & NIPS        |
                         |  WAN: NAT Interface (DHCP)            |
@@ -65,7 +56,7 @@ outputs:
 
 ### 2. pfBlockerNG IP & DNSBL Filtering
 
-Configured **pfBlockerNG-devel** with Unbound DNS Resolver integration:
+Configured pfBlockerNG-devel with Unbound DNS Resolver integration:
 - **IP Blocklists (`IPv4 Feeds`)**: Subscribed to Spamhaus DROP, AbuseIPDB, and PRI1 threat feeds, automatically creating `pfB_PRI1_v4` kernel firewall alias rules.
 - **DNSBL Domain Sinkholing**: Intercepts queries to known malicious C2 and phishing domains, returning sinkhole IP (`10.0.0.1`) before requests exit the LAN interface.
 
@@ -132,7 +123,7 @@ Sep 17 14:22:05 pfsense filterlog[82104]: 100,,,1000000103,em1,match,block,in,4,
 
 ## Repository Layout
 
-```
+```text
 .
 ├── config/
 │   └── suricata_pfsense_override.yaml   # Interface & netmap pf table config
