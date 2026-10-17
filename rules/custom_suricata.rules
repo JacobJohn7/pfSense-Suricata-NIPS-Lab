@@ -19,3 +19,6 @@ drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS Apache Lo
 
 # 6. Block CVE-2024-3400 Palo Alto PAN-OS GlobalProtect Command Injection Probe
 drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS PAN-OS GlobalProtect SESSID Arbitrary File Creation Probe (CVE-2024-3400)"; flow:established,to_server; content:"/ssl-vpn/hipreport.esp"; http_uri; content:"Cookie|3a|"; nocase; content:"SESSID=../../"; classtype:web-application-attack; reference:cve,2024-3400; sid:2000006; rev:1;)
+
+# 7. Block CVE-2023-22515 Atlassian Confluence Broken Access Control Setup Probe
+drop http $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"PFSENSE-IPS Atlassian Confluence Setup Overwrite Attempt (CVE-2023-22515)"; flow:established,to_server; content:"/server-info.action"; http_uri; content:"bootstrapStatusProvider.applicationConfig.setupComplete=false"; nocase; classtype:web-application-attack; reference:cve,2023-22515; sid:2000007; rev:1;)
